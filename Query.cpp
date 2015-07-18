@@ -2,6 +2,7 @@
 // Created by Alex Fridlyand on 7/9/2015.
 //
 #include "Query.h"
+#include "Helpers.h"
 
 #include <fstream>
 #include <iostream>
@@ -9,6 +10,7 @@
 
 using namespace qac;
 using namespace std;
+using namespace helpers;
 
 namespace {
     int getFileSize(ifstream& ifs) {
@@ -17,15 +19,14 @@ namespace {
         ifs.seekg(0, ios_base::beg);
     }
 
-    bool filter(std::string& str) {
-        for (char& c : str) {
-            if (isalpha(c)) {
-                c = tolower(c);
-            } else if (c != ' ' && c != '-') {
-                return false;
-            }
+    void removeBOM(ifstream& ifs) {
+        char a,b,c;
+        a = ifs.get();
+        b = ifs.get();
+        c = ifs.get();
+        if(a!=(char)0xEF || b!=(char)0xBB || c!=(char)0xBF) {
+            ifs.seekg(0);
         }
-        return true;
     }
 }
 
@@ -42,14 +43,81 @@ void Query::loadHistory(string filename) {
 //    char* begin = &*begin(buffer);
 //    ifs.read(begin, size);
 
+    removeBOM(ifs);
     for(std::string line; getline(ifs, line);)
     {
+        trim(line);
         if (filter(line)) {
-            tst.insert(line);
+            log.insert(line);
+
+            for (auto word : splitWords(line)) {
+                unigrams.insert(word);
+            }
+        }
+    }
+
+//    ofstream ofs("D:\\Downloads\\unigrams.txt");
+//    auto keys = unigrams.keys();
+//    print_queue(keys, ofs);
+}
+
+vector<string> Query::suggest(string query/*, string& corr_q*/) {
+    string corr_q;
+    for (auto word : splitWords(query)) {
+        corr_q += corrector->correct(word) + " ";
+    }
+    trim(corr_q);
+    if (corr_q == query) {
+        corr_q.clear();
+    }
+
+    TST::Queue keys;
+
+    while (true) {
+        if (query.empty()) {
+            keys = cache[0];
+        } else if (query.size() == 1) {
+            keys = cache.at(static_cast<int>(query[0]) - static_cast<int>('a') + 1);
+        } else {
+            keys = log.keysWithPrefix(query);
+        }
+
+        if (query == corr_q) {
+//            if (old_keys.top().second > pow(keys.top().second, 2)) { // building some model, TODO: need description.
+//                keys = old_keys;
+//            }
+            break;
+        }
+
+        if (!keys.empty()) {
+            break;
+        }
+        if (!corr_q.empty()) {
+            query = corr_q;
+        } else if (keys.empty()) {
+            break;
+        }
+    }
+    vector<string> sugs;
+    int count = sugg_limit;
+    while (!keys.empty() && count--) {
+        if (keys.top().first.find(corr_q) == 0) {
+            corr_q.clear();
+        }
+        sugs.push_back(keys.top().first);
+        keys.pop();
+    }
+    return sugs;
+}
+
+void Query::buildCache() {
+    for (auto count = 0; count < cache.size(); ++count) {
+        if (count) {
+            cache[count] = log.keysWithPrefix({static_cast<int>('a') + (count - 1)});
+        } else {
+            cache[count] = log.keys();
         }
     }
 }
 
-queue<string> Query::suggest(string query) {
-    return tst.keys(query);
-}
+Query::Query() : corrector(new SpellCorrector(*this)) { }

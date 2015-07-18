@@ -3,35 +3,38 @@
 //
 #include "TST.h"
 
+#include <iostream>
+#include <algorithm>
+
 using namespace qac;
 using namespace std;
 
 TST::TST() : count{0},
-               root{nullptr} {}
+             root{nullptr} {}
 
 TST::~TST() {
     delete root;
 }
 
-void TST::insert(std::string key) {
+void TST::insert(std::string query) {
     ++count;
-    root = insert(root, key, 0);
+    root = insert(root, query, 0);
 }
 
-TST::Node* TST::insert(Node* node, std::string key, int i) {
-    char c = key[i];
+TST::Node* TST::insert(Node* node, std::string query, int i) {
+    char c = query[i];
     if (!node) {
         node = new Node{};
         node->c = c;
     }
     if (c < node->c) {
-        node->left = insert(node->left, key, i);
+        node->left = insert(node->left, query, i);
     } else if (c > node->c) {
-        node->right = insert(node->right, key, i);
-    } else if (i < (key.size() - 1)) {
-        node->mid = insert(node->mid, key, i + 1);
+        node->right = insert(node->right, query, i);
+    } else if (i < (query.size() - 1)) {
+        node->mid = insert(node->mid, query, i + 1);
     } else {
-        node->value = count;
+        ++node->key_count;
     }
 
     return node;
@@ -40,15 +43,16 @@ TST::Node* TST::insert(Node* node, std::string key, int i) {
 int TST::find(std::string key) {
     Node* node = find(root, key, 0);
     if (!node) {
-        return -1; // can use experimental/optional
+        return 0; // can use experimental/optional
     }
-    return node->value;
+    return node->key_count;
 }
 
 TST::Node* TST::find(Node* node, std::string key, int i) {
     if (!node) {
         return nullptr;
     }
+
     char c = key[i];
     if (c < node->c) {
         return find(node->left, key, i);
@@ -67,26 +71,40 @@ TST::Node::~Node() {
     delete right;
 }
 
-queue<string> TST::keys(std::string prefix) {
-    queue<string> q;
-    collect(find(root, prefix, 0), prefix, q);
-    return q;
+TST::Queue TST::keysWithPrefix(std::string prefix) {
+    Queue keys([] (const std::pair<std::string, int> k1, const std::pair<std::string, int> k2) {
+        return k1.second < k2.second;
+    });
+    if (prefix.empty()) {
+        collect(root, prefix, keys);
+    } else {
+        if (auto node = find(root, prefix, 0)) {
+            collect(node->mid, prefix, keys);
+            if (node->key_count) { // exact match
+                keys.push(make_pair(prefix, node->key_count));
+            }
+        }
+    }
+
+    return keys;
 }
 
-void TST::collect(TST::Node *node, string prefix, queue<string>& q) {
+void TST::collect(TST::Node *node, string prefix, Queue& keys) {
     if (!node) {
         return;
     }
-    if (node->value != -1) {
-        q.push(prefix);
+    if (node->key_count) {
+        keys.push(make_pair(prefix + node->c, node->key_count));
     }
-    if (node->left) {
-        collect(node->left, prefix + node->left->c, q);
-    }
+
     if (node->mid) {
-        collect(node->mid, prefix + node->mid->c, q);
+        collect(node->mid, prefix + node->c, keys);
     }
-    if (node->right) {
-        collect(node->right, prefix + node->right->c, q);
-    }
+
+    collect(node->left, prefix, keys);
+    collect(node->right, prefix, keys);
+}
+
+TST::Queue TST::keys() {
+    return keysWithPrefix("");
 }
