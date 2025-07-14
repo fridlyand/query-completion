@@ -1,7 +1,3 @@
-//
-// Created by Alex Fridlyand on 7/16/2015.
-//
-
 #include "Helpers.h"
 
 #include <algorithm>

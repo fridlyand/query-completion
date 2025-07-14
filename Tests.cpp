@@ -1,6 +1,3 @@
-//
-// Created by Alex Fridlyand on 7/9/2015.
-//
 #include "Tests.h"
 
 #include "TST.h"

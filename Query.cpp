@@ -1,6 +1,3 @@
-//
-// Created by Alex Fridlyand on 7/9/2015.
-//
 #include "Query.h"
 #include "Helpers.h"
 
@@ -33,7 +30,7 @@ namespace {
 void Query::loadHistory(string filename) {
     ifstream ifs{filename, ios_base::binary};
     if (!ifs) {
-        cout << "Can't open log file.";
+        cout << "Can't open log file." << endl;
         return;
     }
 
@@ -56,9 +53,10 @@ void Query::loadHistory(string filename) {
         }
     }
 
-//    ofstream ofs("D:\\Downloads\\unigrams.txt");
-//    auto keys = unigrams.keys();
-//    print_queue(keys, ofs);
+    ofstream ofs("unigrams.txt");
+    auto keys = unigrams.keys();
+    print_queue(keys, ofs);
+    ofs.flush();
 }
 
 vector<string> Query::suggest(string query/*, string& corr_q*/) {

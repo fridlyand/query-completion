@@ -1,6 +1,3 @@
-//
-// Created by Alex Fridlyand on 7/17/2015.
-//
 #include "SpellCorrector.h"
 
 #include <algorithm>

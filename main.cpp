@@ -42,7 +42,7 @@ int main() {
     cout << "---Initialization---" << endl;
     {
         auto start = chrono::system_clock::now();
-        loadQueryLog(query, "D:\\Downloads\\query_logs.txt"); // change to argv
+        loadQueryLog(query, "query_logs.txt"); // change to argv
         buildCache(query);
         auto duration = chrono::duration_cast<chrono::seconds>
                 (std::chrono::system_clock::now() - start);

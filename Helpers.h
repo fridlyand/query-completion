@@ -1,6 +1,3 @@
-//
-// Created by Alex Fridlyand on 7/16/2015.
-//
 #pragma once
 
 #include "TST.h"
