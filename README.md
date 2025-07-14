@@ -1,1 +1,5 @@
-Personal tiny C++11 search-auto-completion and spelling-correction engine (circa 2015)
+Personal tiny C++ search-auto-completion and spelling-correction engine.
+
+The program loads a plain-text log of historic queries (one per line) and answers
+prefix requests in real time.  Everything is in memory; there is no external
+storage or network dependency.
